@@ -1,20 +1,7 @@
 # Machine-Learning-Model-Building
-Project Title
-A brief description of your project.
 
 Overview
-Provide a high-level overview of your project, including its purpose, main features, and goals.
-
-Table of Contents
-Installation
-Usage
-Dependencies
-Features
-Code Examples
-License
-Contributing
-Credits
-Installation
+This Project aims to build application for machine learning algorithms of three models Random forest classifier ,Decision Tree classifier, knn classifier.And slso focusing for predction using random forest model,All the major image classification process,Detail NLP Processing, and customer recommendation process.all the above macjine learning process in one application.
 
 Clone the repository:
 git clone https://github.com/Arunbalaaps/Arunbalaaps-repository.git 
@@ -22,9 +9,6 @@ git clone https://github.com/Arunbalaaps/Arunbalaaps-repository.git
 Install dependencies:
 
 pip install -r requirements.txt
-
-Usage
-Describe how to use your application or library. Include examples, screenshots, or GIFs to demonstrate its functionality.
 
 Dependencies
 Streamlit
