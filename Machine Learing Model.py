@@ -749,7 +749,7 @@ if opt =="Customer Recomendation":
     # Create Surprise dataset
     def create_surprise_dataset(data):
         reader = Reader(rating_scale=(1, 5))
-        dataset = Dataset.load_from_df(data[['CustomerId', 'SUB_CATAGORY', 'Credit_Rating']], reader)
+        dataset = Dataset.load_from_df(data[['CustomerId', 'Products', 'Credit_Rating']], reader)
         return dataset
     
     # Build collaborative filtering model
@@ -782,8 +782,8 @@ if opt =="Customer Recomendation":
         # Generate recommendations
         if st.button('Generate Recommendations'):
             # Get unrated items for the selected customer
-            unrated_items = data[data['CustomerId'] == selected_customer][['SUB_CATAGORY']]
-            unrated_items = list(unrated_items['SUB_CATAGORY'])
+            unrated_items = data[data['CustomerId'] == selected_customer][['Products']]
+            unrated_items = list(unrated_items['Products'])
     
             # Make predictions for unrated items
             predictions = [model.predict(selected_customer, item) for item in unrated_items]
@@ -791,7 +791,7 @@ if opt =="Customer Recomendation":
             # Display top recommendations
             st.subheader(f'Top Recommendations for CustomerId {selected_customer}:')
             for prediction in sorted(predictions, key=lambda x: x.est, reverse=True)[:5]:
-                st.write(f'SUB_CATAGORY: {prediction.iid}, Predicted Rating: {prediction.est:.2f}')
+                st.write(f'Products: {prediction.iid}, Predicted Rating: {prediction.est:.2f}')
     
     if __name__ == '__main__':
         main()
