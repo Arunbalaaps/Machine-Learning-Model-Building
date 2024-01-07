@@ -15,13 +15,30 @@ import seaborn as sns
 import pickle
 import warnings
 from sklearn.feature_selection import SelectFromModel
+from imblearn.over_sampling import SMOTE
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_iris
+from sklearn import tree
+import graphviz
+import pydotplus
+from io import StringIO
+from sklearn import datasets
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
+import graphviz
+from PIL import Image
+import io
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from scipy.stats import norm
+import streamlit as st
+import numpy as np
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import plotly.express as px
 from sklearn.feature_selection import SelectKBest, f_classif
-from matplotlib.colors import ListedColormap
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -365,17 +382,25 @@ if opt=="Evaluation Metrics":
         X = df3.drop('has_converted', axis=1)
         y=df3['has_converted']
         
-            
+        
+
+        # Apply MDO (Majority Data Oversampling)
+        st.write("### SMOTE for Oversampling")
+        smote = SMOTE(random_state=42)
+        X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
+        
+        
+        
         # Random Forest Model Build
         model = RandomForestClassifier(n_estimators=50,random_state=42)
         
         rf_model = RandomForestClassifier()
-        rf_model.fit(X_train, y_train)
-        rf_predict=rf_model.predict(X_train)
-        rf_accuracy = accuracy_score(y_train,rf_predict)
-        rf_Precision=precision_score(y_train,rf_predict)
-        rf_recall=recall_score(y_train,rf_predict)
-        rf_f1=f1_score(y_train,rf_predict)
+        rf_model.fit(X_resampled, y_resampled)
+        rf_predict=rf_model.predict(X_resampled)
+        rf_accuracy = accuracy_score(y_resampled,rf_predict)
+        rf_Precision=precision_score(y_resampled,rf_predict)
+        rf_recall=recall_score(y_resampled,rf_predict)
+        rf_f1=f1_score(y_resampled,rf_predict)
         
         # Display Random Forest Model results
         st.write("# Random Forest Model")
@@ -384,14 +409,48 @@ if opt=="Evaluation Metrics":
         st.write("Recall:", rf_recall)
         st.write("F1_score:", rf_f1)
         
+        
+        
+        # Load example dataset
+        iris = load_iris()
+        X, y = iris.data, iris.target
+        
+        # Train a random forest model
+        model = RandomForestClassifier(n_estimators=10, random_state=42)
+        model.fit(X, y)
+        
+        # Function to generate a diagram for one tree in the forest
+        def plot_tree_diagram(tree_model, feature_names, class_names):
+            dot_data = StringIO()
+            tree.export_graphviz(tree_model, out_file=dot_data,
+                                feature_names=feature_names,
+                                class_names=class_names,
+                                filled=True, rounded=True, special_characters=True)
+            graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+            return graph.create_png()
+        
+        # Streamlit app
+        st.title("Example of Random Forest")
+        
+        # Sidebar for selecting tree index
+        tree_index = st.sidebar.slider("Select Tree Index", 0, len(model.estimators_) - 1, 0)
+        
+        # Display tree diagram
+        st.image(plot_tree_diagram(model.estimators_[tree_index], iris.feature_names, iris.target_names),
+                 use_column_width=True,
+                 caption=f"Decision Tree {tree_index + 1} in the Random Forest")
+
+        
+       
+        
         # Decision Tree Model Build
         dt_model = DecisionTreeClassifier()
-        dt_model.fit(X_train, y_train)
-        dt_predict=dt_model.predict(X_train)
-        dt_accuracy = accuracy_score(y_train,dt_predict)
-        dt_Precision=precision_score(y_train,dt_predict)
-        dt_recall=recall_score(y_train,dt_predict)
-        dt_f1=f1_score(y_train,dt_predict)
+        dt_model.fit(X_resampled, y_resampled)
+        dt_predict=dt_model.predict(X_resampled)
+        dt_accuracy = accuracy_score(y_resampled,dt_predict)
+        dt_Precision=precision_score(y_resampled,dt_predict)
+        dt_recall=recall_score(y_resampled,dt_predict)
+        dt_f1=f1_score(y_resampled,dt_predict)
         
         # Display Decision Tree Model results
         st.write("# Decision Tree Model")
@@ -399,16 +458,54 @@ if opt=="Evaluation Metrics":
         st.write("Precision:", dt_Precision)
         st.write("Recall:", dt_recall)
         st.write("F1_score:", dt_f1)
+        
+        
+        
+        def decision_tree_app():
+            st.title("Example of Decision Tree")
+        
+            # Load a sample dataset
+            iris = datasets.load_iris()
+            X = iris.data
+            y = iris.target
+        
+            # Create a Decision Tree model
+            clf = DecisionTreeClassifier()
+            clf.fit(X, y)
+        
+            # Visualize the Decision Tree
+            dot_data = export_graphviz(
+                clf,
+                out_file=None,
+                feature_names=iris.feature_names,
+                class_names=iris.target_names,
+                filled=True,
+                rounded=True,
+                special_characters=True
+            )
+        
+            graph = graphviz.Source(dot_data)
+        
+            # Convert the graph to a PNG image
+            png_image = graph.pipe(format='png')
+            image = Image.open(io.BytesIO(png_image))
+        
+            # Display the image in the Streamlit app
+            st.image(image, use_column_width=True)
+        
+        if __name__ == "__main__":
+            decision_tree_app()
+
 
     
         # KNN Model Build
         knn_model = KNeighborsClassifier()
-        knn_model.fit(X_train, y_train)  # Use the X_train, y_train from the first block
-        knn_predict=knn_model.predict(X_train)
-        knn_accuracy = accuracy_score(y_train, knn_predict)
-        knn_Precision=precision_score(y_train,knn_predict)
-        knn_recall=recall_score(y_train,knn_predict)
-        knn_f1=f1_score(y_train,knn_predict)
+        knn_model.fit(X_resampled, y_resampled)  # Use the X_train, y_train from the first block
+        knn_predict=knn_model.predict(X_resampled)
+        knn_accuracy = accuracy_score(y_resampled, knn_predict)
+        knn_Precision=precision_score(y_resampled,knn_predict)
+        knn_recall=recall_score(y_resampled,knn_predict)
+        knn_f1=f1_score(y_resampled,knn_predict)
         
         
         # Display KNN Model results
@@ -417,6 +514,56 @@ if opt=="Evaluation Metrics":
         st.write("Precision:",knn_Precision)
         st.write("Recall:", knn_recall)
         st.write("F1_score:",knn_f1)
+
+        # Import necessary libraries
+        
+        
+        # Load the Iris dataset as an example
+        iris = datasets.load_iris()
+        X = iris.data[:, :2]  # Use only the first two features for simplicity
+        y = iris.target
+        
+        # Create a KNN classifier
+        knn = KNeighborsClassifier(n_neighbors=5)
+        knn.fit(X, y)
+        
+        # Define a function to plot the decision boundaries
+        def plot_decision_boundaries(X, y, classifier, resolution=0.02):
+            markers = ('s', 'x', 'o')
+            colors = ('red', 'blue', 'lightgreen')
+            cmap = ListedColormap(colors[:len(np.unique(y))])
+        
+            x1_min, x1_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+            x2_min, x2_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+            xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
+                                   np.arange(x2_min, x2_max, resolution))
+            Z = classifier.predict(np.array([xx1.ravel(), xx2.ravel()]).T)
+            Z = Z.reshape(xx1.shape)
+            plt.contourf(xx1, xx2, Z, alpha=0.3, cmap=cmap)
+            plt.xlim(xx1.min(), xx1.max())
+            plt.ylim(xx2.min(), xx2.max())
+        
+            for idx, cl in enumerate(np.unique(y)):
+                plt.scatter(x=X[y == cl, 0], y=X[y == cl, 1],
+                            alpha=0.8, c=colors[idx],
+                            marker=markers[idx], label=cl)
+        
+        # Streamlit app
+        st.title('Example KNN')
+        
+        # Sidebar for user input
+        st.sidebar.header('User Input Parameters')
+        n_neighbors = st.sidebar.slider('Number of neighbors (K)', 1, 15, 5)
+        
+        # Train the KNN classifier with the user-defined number of neighbors
+        knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+        knn.fit(X, y)
+        
+        # Plot the decision boundaries
+        st.pyplot(plot_decision_boundaries(X, y, knn))
+            
+    
+    
     
     # Display results in a table
         results_data = {
@@ -619,20 +766,9 @@ if opt =="NLP Detailing":
     spacy.cli.download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
     
-    # Sample data for text classification
-    # Your text data
-    text_data = [
-        ("I love streamlit", "positive"),
-        ("Streamlit is easy to use", "positive"),
-        ("NLP processing in streamlit is great", "positive"),
-        ("Streamlit helps in building interactive web apps", "positive"),
-        ("I dislike bugs in streamlit", "negative"),
-        ("Streamlit could improve in some areas", "negative"),
-        ("NLP can be challenging for beginners", "negative"),
-        ("I struggle with streamlit syntax", "negative"),
-    ]
     
-    df = pd.DataFrame(text_data, columns=['text', 'label'])
+    
+    df = pd.read_csv("test.csv")
     
     X_train=df["text"]
     y_train=df["label"]
